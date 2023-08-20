@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import com.example.marvel.service.impl.SuperHeroeServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -20,85 +22,87 @@ import com.example.marvel.model.SuperHeroe;
 import com.example.marvel.service.SuperHeroeService;
 
 @RestController
+@RequestMapping("/api/superheroes")
 public class SuperHeroeController {
 
-	@Autowired
-	private SuperHeroeService service;
+    private final SuperHeroeServiceImpl service;
 
-	@PostMapping("/superheroe/add")
-	public ResponseEntity<SuperHeroeDTO> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
-		SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
-		return ResponseEntity.ok(convertSuperHeroetoDTO(newEntity));
-	}
+    public SuperHeroeController(SuperHeroeServiceImpl service) {
+        this.service = service;
+    }
 
-	@PostMapping("/superheroe/added")
-	private ResponseEntity<SuperHeroe> guardar(@RequestBody SuperHeroeDTO superheroe) {
-		SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
+    @PostMapping("/add")
+    public ResponseEntity<SuperHeroeDTO> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
+        SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
+        return ResponseEntity.ok(convertSuperHeroetoDTO(newEntity));
+    }
 
-		try {
-			return ResponseEntity.created(new URI("/api/marvel/" + newEntity.getId())).body(newEntity);
+    @PostMapping("/added")
+    private ResponseEntity<SuperHeroe> guardar(@RequestBody SuperHeroeDTO superheroe) {
+        SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
 
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
-	}
+        try {
+            return ResponseEntity.created(new URI("/api/marvel/" + newEntity.getId())).body(newEntity);
 
-	@DeleteMapping("/superheroe/delete/{id}")
-	private void deleteById(Long id) throws ResourceNotFoundException {
-		Boolean delete = false;
-		delete = service.deleteId(id);
-	}
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
 
-	/* search superheroe by id */
-	@GetMapping("/superheroe/{id}")
-	public SuperHeroeDTO searchId(@PathVariable(required = true) Long id) throws ResourceNotFoundException {
-		SuperHeroe superheroeDB = service.findById(id);
-		SuperHeroeDTO shDTO = convertSuperHeroetoDTO(superheroeDB);
-		return shDTO;
-	}
+    @DeleteMapping("/{id}")
+    private void deleteById(Long id) throws ResourceNotFoundException {
+        Boolean delete = false;
+        delete = service.deleteId(id);
+    }
 
-	/* search all superheroes in DB */
-	@GetMapping("/superheroes")
-	public List<SuperHeroeDTO> superheroe() throws ResourceNotFoundException {
-		List<SuperHeroeDTO> response = new ArrayList<>();
-		List<SuperHeroe> superHeroesDB = service.findAllSuperHeroe();
-		// CREATE MAPPING SERVICE
-		superHeroesDB.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
-		return response;
-	}
+    /* search superheroe by id */
+    @GetMapping("/{id}")
+    public SuperHeroeDTO searchId(@PathVariable(required = true) Long id) throws ResourceNotFoundException {
+        SuperHeroe superheroeDB = service.findById(id);
+        return convertSuperHeroetoDTO(superheroeDB);
+    }
 
-	/* search superheroes name contains String params */
-	@GetMapping("/superheroe/name/{name}")
-	public List<SuperHeroeDTO> superheroename(@PathVariable(required = true) String name)
-			throws ResourceNotFoundException {
-		List<SuperHeroeDTO> response = new ArrayList<SuperHeroeDTO>();
-		Stream<SuperHeroe> shperh;
-		List<SuperHeroe> superHeroesDBName = service.findAllSuperHeroe();
-		shperh = superHeroesDBName.stream().filter(sh -> sh.getNombre().contains(name));
-		shperh.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
-		return response;
-	}
+    /* search all superheroes in DB */
+    @GetMapping("/")
+    public List<SuperHeroeDTO> superheroe() throws ResourceNotFoundException {
+        List<SuperHeroeDTO> response = new ArrayList<>();
+        List<SuperHeroe> superHeroesDB = service.findAllSuperHeroe();
+        // CREATE MAPPING SERVICE
+        superHeroesDB.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
+        return response;
+    }
 
-	/* search superheroes name contains String params */
-	@RequestMapping("/sup/{name}")
-	@GetMapping("/sup/{name}")
-	public List<SuperHeroeDTO> supheroename(@PathVariable(required = true) String name)
-			throws ResourceNotFoundException {
-		List<SuperHeroeDTO> listshDTO = new ArrayList<SuperHeroeDTO>();
-		List<SuperHeroe> listsh = service.findByNameContains(name);
-		listsh.forEach(sh -> listshDTO.add(convertSuperHeroetoDTO((SuperHeroe) listsh)));
-		return listshDTO;
-	}
+    /* search superheroes name contains String params */
+    @GetMapping("/name/{name}")
+    public List<SuperHeroeDTO> superheroename(@PathVariable(required = true) String name)
+            throws ResourceNotFoundException {
+        List<SuperHeroeDTO> response = new ArrayList<SuperHeroeDTO>();
+        Stream<SuperHeroe> shperh;
+        List<SuperHeroe> superHeroesDBName = service.findAllSuperHeroe();
+        shperh = superHeroesDBName.stream().filter(sh -> sh.getNombre().contains(name));
+        shperh.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
+        return response;
+    }
 
-	private SuperHeroe createSuperHeroeFromDTO(SuperHeroeDTO superheroe) {
-		return new SuperHeroe(superheroe.getId(), superheroe.getNombre(), superheroe.isLive(), superheroe.getUniverso(),
-				superheroe.getPoderes());
-	}
+    /* search superheroes name contains String params */
+    @GetMapping("/name/contains/{name}")
+    public List<SuperHeroeDTO> supheroename(@PathVariable(required = true) String name)
+            throws ResourceNotFoundException {
+        List<SuperHeroeDTO> listshDTO = new ArrayList<SuperHeroeDTO>();
+        List<SuperHeroe> listsh = service.findByNameContains(name);
+        listsh.forEach(sh -> listshDTO.add(convertSuperHeroetoDTO((SuperHeroe) listsh)));
+        return listshDTO;
+    }
 
-	private SuperHeroeDTO convertSuperHeroetoDTO(SuperHeroe superheroe) {
-		return new SuperHeroeDTO(superheroe.getId(), superheroe.getNombre(), superheroe.isLive(),
-				superheroe.getUniverso(), superheroe.getPoderes());
+    private SuperHeroe createSuperHeroeFromDTO(SuperHeroeDTO superheroe) {
+        return new SuperHeroe(superheroe.getId(), superheroe.getNombre(), superheroe.isLive(), superheroe.getUniverso(),
+                superheroe.getPoderes());
+    }
 
-	}
+    private SuperHeroeDTO convertSuperHeroetoDTO(SuperHeroe superheroe) {
+        return new SuperHeroeDTO(superheroe.getId(), superheroe.getNombre(), superheroe.isLive(),
+                superheroe.getUniverso(), superheroe.getPoderes());
+
+    }
 
 }
