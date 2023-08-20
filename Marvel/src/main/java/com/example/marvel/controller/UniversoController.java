@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.marvel.dto.UniversoDTO;
 import com.example.marvel.model.Universo;
-import com.example.marvel.service.UniversoService;
 
 @RestController
 @RequestMapping("/api/universe")
@@ -24,7 +23,7 @@ public class UniversoController {
 
     /* search superheroe by id */
     @GetMapping("/{id}")
-    public UniversoDTO searchId(@PathVariable(required = true) Long id) throws ResourceNotFoundException {
+    public UniversoDTO searchId(@PathVariable Long id) throws ResourceNotFoundException {
         Universo universoDB = service.findById(id);
         // CREATE MAPPING SERVICE
         return convertPoderToDTO(universoDB);
