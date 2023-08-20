@@ -10,5 +10,4 @@ public interface SuperHeroeRepository extends JpaRepository<SuperHeroe, Long> {
 
 	/* search superheroes name equal string parameter */
 	List<SuperHeroe> findByNombreContains(String name);
-
 }

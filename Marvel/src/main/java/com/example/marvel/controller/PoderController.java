@@ -1,8 +1,5 @@
 package com.example.marvel.controller;
 
-import com.example.marvel.dto.UniversoDTO;
-import com.example.marvel.model.Universo;
-import com.example.marvel.service.impl.PoderServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +18,10 @@ import java.util.List;
 @RequestMapping("/api/power")
 public class PoderController {
 
-    private final PoderServiceImpl service;
+    private final PoderService service;
 
-    public PoderController(PoderServiceImpl service) {
+    @Autowired
+    public PoderController(PoderService service) {
         this.service = service;
     }
 
@@ -39,7 +37,7 @@ public class PoderController {
 
     /* search superheroe by id */
     @GetMapping("/{id}")
-    public PoderDTO searchId(@PathVariable(required = true) Long id) throws ResourceNotFoundException {
+    public PoderDTO searchId(@PathVariable Long id) throws ResourceNotFoundException {
         Poder poderDB = service.findById(id);
         return convertPoderToDTO(poderDB);
     }

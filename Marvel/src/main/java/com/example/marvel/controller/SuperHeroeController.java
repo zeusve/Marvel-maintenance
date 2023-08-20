@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.example.marvel.service.impl.SuperHeroeServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -25,9 +24,10 @@ import com.example.marvel.service.SuperHeroeService;
 @RequestMapping("/api/superheroes")
 public class SuperHeroeController {
 
-    private final SuperHeroeServiceImpl service;
+    private final SuperHeroeService service;
 
-    public SuperHeroeController(SuperHeroeServiceImpl service) {
+    @Autowired
+    public SuperHeroeController(SuperHeroeService service) {
         this.service = service;
     }
 
@@ -57,7 +57,7 @@ public class SuperHeroeController {
 
     /* search superheroe by id */
     @GetMapping("/{id}")
-    public SuperHeroeDTO searchId(@PathVariable(required = true) Long id) throws ResourceNotFoundException {
+    public SuperHeroeDTO searchId(@PathVariable Long id) throws ResourceNotFoundException {
         SuperHeroe superheroeDB = service.findById(id);
         return convertSuperHeroetoDTO(superheroeDB);
     }
@@ -74,9 +74,9 @@ public class SuperHeroeController {
 
     /* search superheroes name contains String params */
     @GetMapping("/name/{name}")
-    public List<SuperHeroeDTO> superheroename(@PathVariable(required = true) String name)
+    public List<SuperHeroeDTO> superheroename(@PathVariable String name)
             throws ResourceNotFoundException {
-        List<SuperHeroeDTO> response = new ArrayList<SuperHeroeDTO>();
+        List<SuperHeroeDTO> response = new ArrayList<>();
         Stream<SuperHeroe> shperh;
         List<SuperHeroe> superHeroesDBName = service.findAllSuperHeroe();
         shperh = superHeroesDBName.stream().filter(sh -> sh.getNombre().contains(name));
@@ -86,9 +86,9 @@ public class SuperHeroeController {
 
     /* search superheroes name contains String params */
     @GetMapping("/name/contains/{name}")
-    public List<SuperHeroeDTO> supheroename(@PathVariable(required = true) String name)
+    public List<SuperHeroeDTO> supheroename(@PathVariable String name)
             throws ResourceNotFoundException {
-        List<SuperHeroeDTO> listshDTO = new ArrayList<SuperHeroeDTO>();
+        List<SuperHeroeDTO> listshDTO = new ArrayList<>();
         List<SuperHeroe> listsh = service.findByNameContains(name);
         listsh.forEach(sh -> listshDTO.add(convertSuperHeroetoDTO((SuperHeroe) listsh)));
         return listshDTO;

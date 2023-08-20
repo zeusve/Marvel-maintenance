@@ -14,8 +14,12 @@ import com.example.marvel.service.PoderService;
 @Service
 public class PoderServiceImpl implements PoderService {
 
+    private final PoderRepository repository;
+
     @Autowired
-    PoderRepository repository;
+    public PoderServiceImpl(PoderRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public List<Poder> findAllUniversos() throws ResourceNotFoundException {

@@ -6,5 +6,4 @@ import com.example.marvel.model.Universo;
 
 @Repository
 public interface UniversoRepository extends JpaRepository<Universo, Long> {
-
 }

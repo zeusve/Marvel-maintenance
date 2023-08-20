@@ -3,7 +3,7 @@ package com.example.marvel.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.marvel.service.impl.UniversoServiceImpl;
+import com.example.marvel.service.UniversoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +18,12 @@ import com.example.marvel.model.Universo;
 @RequestMapping("/api/universe")
 public class UniversoController {
 
+    private final UniversoService service;
+
     @Autowired
-    UniversoServiceImpl service;
+    public UniversoController(UniversoService service){
+        this.service = service;
+    }
 
     /* search superheroe by id */
     @GetMapping("/{id}")
