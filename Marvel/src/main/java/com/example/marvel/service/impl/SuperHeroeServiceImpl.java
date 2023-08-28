@@ -22,11 +22,16 @@ public class SuperHeroeServiceImpl implements SuperHeroeService {
 
     @Override
     public SuperHeroe createSuperHeroe(SuperHeroe sh) {
-        if (sh != null)
-            repository.save(sh);
-        else
-            throw new ResourceNotFoundException("super heroe is null");
-        return sh;
+        if (sh == null) {
+            throw new IllegalArgumentException("SuperHeroe cannot be null");
+        }
+
+        List<SuperHeroe> existingHeroes = repository.findByNombreContains(sh.getNombre());
+        if (!existingHeroes.isEmpty()) {
+            throw new IllegalArgumentException("A SuperHeroe with the same name already exists");
+        }
+
+        return repository.save(sh);
     }
 
     @Override
@@ -46,8 +51,12 @@ public class SuperHeroeServiceImpl implements SuperHeroeService {
 
     @Override
     public Boolean deleteId(Long id) throws ResourceNotFoundException {
-        repository.deleteById(id);
-        return null;
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        } else {
+            throw new ResourceNotFoundException("SuperHeroe with ID " + id + " not found");
+        }
     }
 
     @Override

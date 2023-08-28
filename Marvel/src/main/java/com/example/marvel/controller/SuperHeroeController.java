@@ -31,35 +31,42 @@ public class SuperHeroeController {
         this.service = service;
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<SuperHeroeDTO> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
-        SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
-        return ResponseEntity.ok(convertSuperHeroetoDTO(newEntity));
-    }
-
-    @PostMapping("/added")
-    private ResponseEntity<SuperHeroe> guardar(@RequestBody SuperHeroeDTO superheroe) {
-        SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
-
+    @PostMapping("/")
+    public ResponseEntity<Object> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
         try {
-            return ResponseEntity.created(new URI("/api/marvel/" + newEntity.getId())).body(newEntity);
-
+            SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
+            return ResponseEntity.created(new URI("/api/superheroes/" + newEntity.getId())).body(newEntity);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @DeleteMapping("/{id}")
-    private void deleteById(Long id) throws ResourceNotFoundException {
-        Boolean delete = false;
-        delete = service.deleteId(id);
+    private ResponseEntity<String> deleteById(@PathVariable Long id) {
+        try {
+            boolean deleteSuccess = service.deleteId(id);
+
+            if (deleteSuccess) {
+                return ResponseEntity.ok("SuperHeroe deleted successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("SuperHeroe not found");
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     /* search superheroe by id */
     @GetMapping("/{id}")
-    public SuperHeroeDTO searchId(@PathVariable Long id) throws ResourceNotFoundException {
-        SuperHeroe superheroeDB = service.findById(id);
-        return convertSuperHeroetoDTO(superheroeDB);
+    public ResponseEntity<Object> searchId(@PathVariable Long id) {
+        try {
+            SuperHeroe superheroeDB = service.findById(id);
+            return ResponseEntity.ok(convertSuperHeroetoDTO(superheroeDB));
+        } catch (ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     /* search all superheroes in DB */
