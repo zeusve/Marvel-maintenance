@@ -2,9 +2,11 @@ package com.example.marvel.controller;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.example.marvel.exception.ErrorDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -32,42 +34,44 @@ public class SuperHeroeController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<Object> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
+    public ResponseEntity<?> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
         try {
             SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
             return ResponseEntity.created(new URI("/api/superheroes/" + newEntity.getId())).body(newEntity);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createErrorDetails(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createErrorDetails(e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    private ResponseEntity<String> deleteById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteById(@PathVariable Long id) {
         try {
             boolean deleteSuccess = service.deleteId(id);
 
             if (deleteSuccess) {
                 return ResponseEntity.ok("SuperHeroe deleted successfully");
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("SuperHeroe not found");
+                return ResponseEntity.notFound().build();
             }
         } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
         }
     }
 
     /* search superheroe by id */
     @GetMapping("/{id}")
-    public ResponseEntity<Object> searchId(@PathVariable Long id) {
+    public ResponseEntity<?> searchId(@PathVariable Long id) {
         try {
             SuperHeroe superheroeDB = service.findById(id);
             return ResponseEntity.ok(convertSuperHeroetoDTO(superheroeDB));
-        } catch (ResourceNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
         }
     }
+
+
 
     /* search all superheroes in DB */
     @GetMapping("/")
@@ -110,6 +114,10 @@ public class SuperHeroeController {
         return new SuperHeroeDTO(superheroe.getId(), superheroe.getNombre(), superheroe.isLive(),
                 superheroe.getUniverso(), superheroe.getPoderes());
 
+    }
+
+    private ErrorDetails createErrorDetails(String details) {
+        return new ErrorDetails(new Date(), "Resource not found", details);
     }
 
 }
