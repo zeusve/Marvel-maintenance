@@ -2,12 +2,14 @@ package com.example.marvel.service;
 
 import java.util.List;
 
+import com.example.marvel.exception.ErrorDetails;
+import com.example.marvel.exception.ErrorModel400;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 import com.example.marvel.model.SuperHeroe;
 
 public interface SuperHeroeService {
-    SuperHeroe createSuperHeroe(SuperHeroe newSuperHeroe);
+    SuperHeroe createSuperHeroe(SuperHeroe newSuperHeroe) throws ErrorModel400;
 
     /*Search all super heroes in DB*/
     List<SuperHeroe> findAllSuperHeroe() throws ResourceNotFoundException;

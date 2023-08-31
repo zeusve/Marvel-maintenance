@@ -3,8 +3,6 @@ package com.example.marvel.service.impl;
 import java.util.List;
 import java.util.Optional;
 
-import com.example.marvel.model.Universo;
-import com.example.marvel.repository.UniversoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -16,19 +14,18 @@ import com.example.marvel.service.SuperHeroeService;
 public class SuperHeroeServiceImpl implements SuperHeroeService {
 
     private final SuperHeroeRepository superHeroeRepository;
-    private final UniversoRepository universoRepository;
 
     @Autowired
-    public SuperHeroeServiceImpl(SuperHeroeRepository superHeroeRepository, UniversoRepository universoRepository) {
+    public SuperHeroeServiceImpl(SuperHeroeRepository superHeroeRepository) {
         this.superHeroeRepository = superHeroeRepository;
-        this.universoRepository = universoRepository;
     }
 
     @Override
     public SuperHeroe createSuperHeroe(SuperHeroe sh) {
-        checkUniverseExist(sh.getUniverso());
-        validateSuperHeroe(sh);
-        checkDuplicateName(sh.getNombre());
+        List<SuperHeroe> existingHeroes = superHeroeRepository.findByNombreContains(sh.getNombre());
+        if (!existingHeroes.isEmpty()) {
+            throw new ResourceNotFoundException("A SuperHeroe with the same name already exists");
+        }
         return superHeroeRepository.save(sh);
     }
 
@@ -89,35 +86,5 @@ public class SuperHeroeServiceImpl implements SuperHeroeService {
         if (shList.isEmpty())
             throw new ResourceNotFoundException("there are no results for the indicated name");
         return shList;
-
     }
-
-    private void validateSuperHeroe(SuperHeroe sh) {
-        if (sh == null) {
-            throw new IllegalArgumentException("SuperHeroe cannot be null");
-        }
-        if (sh.getNombre() == null) {
-            throw new IllegalArgumentException("Name is required mandatory");
-        }
-        if (sh.getUniverso() == null) {
-            throw new IllegalArgumentException("Universe is required mandatory");
-        }
-        if (sh.getUniverso().getId() == null) {
-            throw new IllegalArgumentException("Universe id is required mandatory");
-        }
-    }
-
-    private void checkDuplicateName(String nombre) {
-        List<SuperHeroe> existingHeroes = superHeroeRepository.findByNombreContains(nombre);
-        if (!existingHeroes.isEmpty()) {
-            throw new IllegalArgumentException("A SuperHeroe with the same name already exists");
-        }
-    }
-
-    private void checkUniverseExist(Universo universo) {
-        if(!universoRepository.existsById(universo.getId())){
-            throw new IllegalArgumentException("The universe does not exist");
-        }
-    }
-
 }

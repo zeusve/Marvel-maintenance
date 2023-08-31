@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import com.example.marvel.exception.ErrorDetails;
+import com.example.marvel.exception.ErrorModel400;
+import com.example.marvel.model.Universo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -27,21 +29,26 @@ import com.example.marvel.service.SuperHeroeService;
 public class SuperHeroeController {
 
     private final SuperHeroeService service;
-
+    private final List<ErrorDetails> errorDetails = new ArrayList<>();
     @Autowired
-    public SuperHeroeController(SuperHeroeService service) {
+    public SuperHeroeController(SuperHeroeService service) throws ErrorModel400 {
         this.service = service;
     }
 
     @PostMapping("/")
     public ResponseEntity<?> createSuperHeroe(@RequestBody SuperHeroeDTO superheroe) {
         try {
+            validateSuperHeroe(superheroe);
             SuperHeroe newEntity = service.createSuperHeroe(createSuperHeroeFromDTO(superheroe));
             return ResponseEntity.created(new URI("/api/superheroes/" + newEntity.getId())).body(newEntity);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createErrorDetails(e.getMessage()));
+        } catch (ResourceNotFoundException | IllegalArgumentException e){
+            errorDetails.clear();
+            errorDetails.add(createErrorDetails(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorModel400(errorDetails).getErrors());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createErrorDetails(e.getMessage()));
+        } catch (ErrorModel400 e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrors());
         }
     }
 
@@ -71,38 +78,45 @@ public class SuperHeroeController {
         }
     }
 
-
-
     /* search all superheroes in DB */
     @GetMapping("/")
-    public List<SuperHeroeDTO> superheroe() throws ResourceNotFoundException {
-        List<SuperHeroeDTO> response = new ArrayList<>();
-        List<SuperHeroe> superHeroesDB = service.findAllSuperHeroe();
-        // CREATE MAPPING SERVICE
-        superHeroesDB.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
-        return response;
+    public ResponseEntity<?> superheroe() {
+        try {
+            List<SuperHeroeDTO> response = new ArrayList<>();
+            List<SuperHeroe> superHeroesDB = service.findAllSuperHeroe();
+            superHeroesDB.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
+        }
     }
 
     /* search superheroes name contains String params */
     @GetMapping("/name/{name}")
-    public List<SuperHeroeDTO> superheroename(@PathVariable String name)
-            throws ResourceNotFoundException {
-        List<SuperHeroeDTO> response = new ArrayList<>();
-        Stream<SuperHeroe> shperh;
-        List<SuperHeroe> superHeroesDBName = service.findAllSuperHeroe();
-        shperh = superHeroesDBName.stream().filter(sh -> sh.getNombre().contains(name));
-        shperh.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
-        return response;
+    public ResponseEntity<?> superheroename(@PathVariable String name) {
+        try {
+            List<SuperHeroeDTO> response = new ArrayList<>();
+            Stream<SuperHeroe> superHeroeStream;
+            List<SuperHeroe> superHeroesDBName = service.findAllSuperHeroe();
+            superHeroeStream = superHeroesDBName.stream().filter(sh -> sh.getNombre().contains(name));
+            superHeroeStream.forEach(sh -> response.add(convertSuperHeroetoDTO(sh)));
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
+        }
     }
 
     /* search superheroes name contains String params */
     @GetMapping("/name/contains/{name}")
-    public List<SuperHeroeDTO> supheroename(@PathVariable String name)
-            throws ResourceNotFoundException {
-        List<SuperHeroeDTO> listshDTO = new ArrayList<>();
-        List<SuperHeroe> listsh = service.findByNameContains(name);
-        listsh.forEach(sh -> listshDTO.add(convertSuperHeroetoDTO((SuperHeroe) listsh)));
-        return listshDTO;
+    public ResponseEntity<?> supheroename(@PathVariable String name) {
+        try {
+            List<SuperHeroeDTO> superHeroeDTO = new ArrayList<>();
+            List<SuperHeroe> byNameContains = service.findByNameContains(name);
+            byNameContains.forEach(sh -> superHeroeDTO.add(convertSuperHeroetoDTO((SuperHeroe) byNameContains)));
+            return ResponseEntity.ok(superHeroeDTO);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
+        }
     }
 
     private SuperHeroe createSuperHeroeFromDTO(SuperHeroeDTO superheroe) {
@@ -120,4 +134,31 @@ public class SuperHeroeController {
         return new ErrorDetails(new Date(), "Resource not found", details);
     }
 
+    private void validateSuperHeroe(SuperHeroeDTO sh) throws ErrorModel400 {
+        errorDetails.clear();
+        if (sh == null) {
+            errorDetails.add(new ErrorDetails(new Date(), "SuperHeroe cannot be null",""));
+        }
+        if (sh != null) {
+            if (sh.getNombre() == null) {
+                errorDetails.add(new ErrorDetails(new Date(), "Name is required mandatory",""));
+            }
+        }
+        Universo universe = sh.getUniverso();
+
+        if (universe == null) {
+            errorDetails.add(new ErrorDetails(new Date(), "Universe is required mandatory", ""));
+        } else {
+            Long universeId = universe.getId();
+            if (universeId == null) {
+                errorDetails.add(new ErrorDetails(new Date(), "Universe id is required mandatory", ""));
+            } else if (!(universeId instanceof Long)) {
+                errorDetails.add(new ErrorDetails(new Date(), "The universe id requires Long mandatory", ""));
+            }
+        }
+
+        if (!errorDetails.isEmpty()) {
+            throw new ErrorModel400(errorDetails);
+        }
+    }
 }
