@@ -25,7 +25,7 @@ public class UniversoServiceImpl implements UniversoService {
     public Universo findById(Long id) throws ResourceNotFoundException {
         Optional<Universo> universoDB = repository.findById(id);
         if (universoDB.isEmpty()) {
-            throw new ResourceNotFoundException("Poder not found");
+            throw new ResourceNotFoundException("Universe does not exist");
         }
         return universoDB.get();
     }

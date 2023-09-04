@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import com.example.marvel.exception.ErrorDetails;
 import com.example.marvel.exception.ErrorModel400;
 import com.example.marvel.model.Universo;
+import com.example.marvel.service.UniversoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -29,10 +30,12 @@ import com.example.marvel.service.SuperHeroeService;
 public class SuperHeroeController {
 
     private final SuperHeroeService service;
+    private final UniversoService universoService;
     private final List<ErrorDetails> errorDetails = new ArrayList<>();
     @Autowired
-    public SuperHeroeController(SuperHeroeService service) throws ErrorModel400 {
+    public SuperHeroeController(SuperHeroeService service, UniversoService universoService) throws ErrorModel400 {
         this.service = service;
+        this.universoService = universoService;
     }
 
     @PostMapping("/")
@@ -54,6 +57,10 @@ public class SuperHeroeController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(createErrorDetails("Invalid ID: " + id));
+        }
+
         try {
             boolean deleteSuccess = service.deleteId(id);
 
@@ -66,6 +73,7 @@ public class SuperHeroeController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorDetails(e.getMessage()));
         }
     }
+
 
     /* search superheroe by id */
     @GetMapping("/{id}")
@@ -152,8 +160,11 @@ public class SuperHeroeController {
             Long universeId = universe.getId();
             if (universeId == null) {
                 errorDetails.add(new ErrorDetails(new Date(), "Universe id is required mandatory", ""));
-            } else if (!(universeId instanceof Long)) {
-                errorDetails.add(new ErrorDetails(new Date(), "The universe id requires Long mandatory", ""));
+            } else {
+                Universo universo = universoService.findById(universeId);
+                if (universo.getId()==null){
+                    errorDetails.add(new ErrorDetails(new Date(), "Universe id does not exist", ""));
+                }
             }
         }
 
